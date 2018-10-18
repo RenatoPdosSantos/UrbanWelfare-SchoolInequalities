@@ -1,7 +1,7 @@
 ---
-title: "Electricity, Water Supply, and Sanitation"
-author: "Renato P. dos Santos"
-date: "17 July 2017"
+title: "School Inequalities and Urban Welfare: Going beyond Socioeconomic Status with Data Science"
+author: "Renato P. dos Santos and Isadora L. Lemes"
+date: "18 October 2018"
 output: word_document
 ---
 
@@ -10,8 +10,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Abstract
-Despite the tantalising evidence for Brazilian students’ socioeconomic status being one of the leading single predictors of their school achievements (dos Santos, 2017), this measure does not account for the complexity of the ‘real income’ (Harvey, 1971) that the city must offer people in terms of material conditions of life, in the form of housing, transportation and quality education, to be provided and used collectively. This concept allows one to evaluate better how the uneven distribution of urban conditions among social groups in the city favours social inequalities (Ribeiro & Ribeiro, 2013, pp. 9–11). Yet, the changing Brazilian urban reality segregates people in socio-spatial terms and distributes urban public resources unfairly, threatening student’s access to the structure of educational opportunities and causing school inequalities (Ribeiro, Koslinski, Zuccarelli, & Christovão, 2016). For that reason, we expanded the study of Ribeiro et al. (2016) in Brazilian metropolises, using data from Brazil’s 2010 Population and Housing Census made available via the SIDRA system , to investigate each of the 20 indicators that compose the Urban Welfare Index (IBEU) (Ribeiro & Ribeiro, 2013). Factors such as existence of public lighting, paving, sidewalk, wheelchair ramp, open sewage and garbage accumulated around the homes, as well as electricity and water supply, sanitation, the material of the walls of the houses, and the number of residents per bedroom and bathroom as predictors of school achievements as measured using their average ENEM (National High School Exam) outcomes and IDEB (Basic Education Development Index) results are discussed using Data Science methods. Results show that the Urban Housing Conditions dimension of IBEU has a higher correlation with IDEB, while students’ socioeconomic status correlates better with ENEM than with IDEB, relations that are clearly illustrated by means of bivariate choropleth maps across each of the 5,564 Brazilian municipalities. This seems to confirm that the uneven distribution of urban conditions reduces educational opportunities and engenders social inequalities that are incompatible with a sustainable society.
-Keywords
+The changing Brazilian urban reality segregates people in socio-spatial terms and distributes urban public resources unfairly, threatening student's access to the structure of educational opportunities and causing school inequalities. In this paper, 20 factors such as existence of public lighting, open sewage and garbage accumulated around the homes, as well as electricity and water supply, sanitation, and the number of residents per bathroom as predictors of school achievements as measured using their average ENEM (National High School Exam) outcomes are discussed using Data Science methods. Results show that the Urban Housing Conditions have a higher correlation than students' socioeconomic status, relations that are clearly illustrated by means of bivariate choropleth maps across all the 5,564 Brazilian municipalities. This seems to confirm that the uneven distribution of urban conditions reduces educational opportunities and engenders social inequalities that are incompatible with a sustainable society.
+
+##Keywords
+schooling inequalities; social inequalities; sustainability; urban inequalities; urban welfare
 
 ```{r Environment, echo = FALSE}
 # Enviroment values
@@ -21,27 +23,45 @@ OS.version <- sessionInfo()$running
 platform <- sessionInfo()$platform
 ```
 
+```{r silentLoad, echo = FALSE}
+silentLoad <- function(pckg) {
+  if (!(pckg %in% available.packages())) {
+    return(paste("package",
+                 pckg,
+                 "not available!"))
+  }
+  if (!(pckg %in% installed.packages())) {
+    suppressMessages(install.packages(pckg))
+  }
+  suppressMessages(library(pckg,
+                           character.only = TRUE))
+}
+```
+
 ```{r Packages, echo = FALSE}
-suppressMessages(library(broom)) # Convertion of statistical analysis objects into tidy data frames
-suppressMessages(library(maptools)) # Reading and Handling Spatial Objects
-suppressMessages(library(mapproj)) # Convertion of latitude/longitude into projected coordinates
-suppressMessages(library(rgdal)) # Bindings for the Geospatial Data Abstraction Library
-suppressMessages(library(ggplot2)) # Elegant data visualisations using the grammar of graphics
-suppressMessages(library(readr)) # Fast and friendly reading of '.csv', '.tsv', and '.fwf' data
-suppressMessages(library(plyr)) # Tools for Splitting, Applying and Combining Data. Required for XGBoost Method (must be loaded before dplyr)
-suppressMessages(library(gpclib)) # General polygon clipping library for R
-suppressMessages(library(rgeos)) # Interface to Geometry Engine - Open Source (GEOS)
-suppressMessages(library(ggsn)) # North Symbols and Scale Bars for Maps Created with 'ggplot2' or 'ggmap'
-suppressMessages(library(digest)) # Create compact hash digests of R objects
-suppressMessages(library(psych)) # Functions for analyzing data at multiple levels
-suppressMessages(library(colorplaner)) # A 'ggplot2' extension to create a bivariate choropleth in R with multivariate color scales.
-suppressMessages(library(Hmisc)) # Miscellaneous useful functions for data analysis
-suppressMessages(library(knitr)) # General-purpose tool for dynamic report generation in R
-suppressMessages(library(corrplot)) # Graphical display of correlation matrix
-suppressMessages(library(extrafont)) # Tools to using system TrueType fonts 
+#suppressMessages(library(xlsx)) # XML files manipulation
+silentLoad("scales") # Scale functions for visualization
+silentLoad("broom") # Convertion of statistical analysis objects into tidy data frames
+silentLoad("maptools") # Reading and Handling Spatial Objects
+silentLoad("mapproj") # Convertion of latitude/longitude into projected coordinates
+silentLoad("rgdal") # Bindings for the Geospatial Data Abstraction Library
+silentLoad("ggplot2") # Elegant data visualisations using the grammar of graphics
+silentLoad("readr") # Fast and friendly reading of '.csv', '.tsv', and '.fwf' data
+silentLoad("plyr") # Tools for Splitting, Applying and Combining Data. Required for XGBoost Method (must be loaded before dplyr)
+#silentLoad("gpclib") # General polygon clipping library for R
+silentLoad("rgeos") # Interface to Geometry Engine - Open Source (GEOS)
+silentLoad("ggsn") # North Symbols and Scale Bars for Maps Created with 'ggplot2' or 'ggmap'
+silentLoad("digest") # Create compact hash digests of R objects
+silentLoad("psych") # Functions for analyzing data at multiple levels
+silentLoad("colorplaner") # A 'ggplot2' extension to create a bivariate choropleth in R with multivariate color scales.
+silentLoad("data.table")
+silentLoad("Hmisc") # Miscellaneous useful functions for data analysis
+silentLoad("knitr") # General-purpose tool for dynamic report generation in R
+silentLoad("corrplot") # Graphical display of correlation matrix
+silentLoad("extrafont") # Tools to using system TrueType fonts 
 windowsFonts(Arial=windowsFont("TT Arial"))
-suppressMessages(library(Cairo)) # Library for  high-quality output
-suppressMessages(library(rmarkdown)) # Dynamic documents for R
+silentLoad("Cairo") # Library for  high-quality output
+silentLoad("rmarkdown") # Dynamic documents for R
 
 citations <- function(includeURL = TRUE, includeRStudio = TRUE) {
     if(includeRStudio == TRUE) {
@@ -69,7 +89,7 @@ citations <- function(includeURL = TRUE, includeRStudio = TRUE) {
 # Source: http://www.sthda.com/english/wiki/correlationmatrixaquickstartguidetoanalyzeformatandvisualizeacorrelationmatrixusingrsoftware
 # ++++++++++++++++++++++++++++
 # cormat : matrix of the correlation coefficients
-# pmat : matrix of the correlation p‐values
+# pmat : matrix of the correlation p-values
 flattenCorrMatrix <- function(cormat, pmat, digits = 2) {
     ut <- upper.tri(cormat)
     data.frame(
@@ -100,31 +120,31 @@ IndicStand <- function(Indic, negative = FALSE) {
 ## Composition of the IBEU index
 
 Five dimensions (D1 - D5), each composed of one to seven indices
-D1: Mobilidade Urbana: 
-1.	Deslocamento casa-trabalho
-D2: Condições Ambientais Urbanas:
-2.	Arborização no entorno dos domicílios
-3.	Esgoto a céu aberto no entorno dos domicílios
-4.	Lixo acumulado no entorno dos domicílios
-D3: Condições Habitacionais Urbanas:
-5.	Aglomerado subnormal
-6.	Densidade domiciliar: número de pessoas no domicílio por número de dormitórios
-7.	Densidade morador/banheiro
-8.	Material das paredes dos domicílios
-9.	Espécie dos domicílios
-D4: Atendimento de Serviços Coletivos Urbanos:
-10.	Atendimento de água
-11.	Atendimento de esgoto
-12.	Atendimento de energia
-13.	Coleta de lixo
-D5: Infraestrutura Urbana:
-14.	Iluminação pública
-15.	Pavimentação
-16.	Calçada
-17.	Meio-fio/Guia
-18.	Bueiro ou boca de lobo
-19.	Rampa para cadeirantes
-20.	Identificação de Logradouro
+D1: Urban Mobility:
+1. Home-to-Work Displacement
+D2: Urban Environmental Conditions:
+2. Arborization around households
+3. Open sewage in the vicinity of households
+4. Accumulated garbage around households
+D3: Urban Housing Conditions:
+5. Subnormal clump
+6. Household density: number of people in the household per number of dormitories
+7. Resident / Bathroom Density 
+8. Household wall material
+9. Species of households
+D4: Attendance of Urban Collective Services:
+10. Water supply
+11. Sewage treatment
+12. Electricity supply
+13. Waste collection
+D5: Urban Infrastructure:
+14. Public lighting
+15. Paving
+16. Sidewalk
+17. Curb / Guide
+18. Road gully
+19. Wheelchair ramp
+20. Street address identification
 
 Polygons of Brazilian States and Municipalities. Retrieved from: http://www.gmapas.com/poligonos-ibge/municipios-do-brasil
 
@@ -159,7 +179,7 @@ municipiosDF <- subset(municipiosDF, (id %in% keepList))
 Table of Codes of Municipalities. Retrieved from: http://concla.ibge.gov.br/classificacoes/por-tema/codigo-de-areas/codigo-de-areas.html
 
 ```{r geocodigos}
-# Geocódigos do IBGE
+# Geocodes from IBGE
 codigosFile <- "data/municipios-codes.csv"
 # Read only relevant variables
 codigosDF <- read_csv2(
@@ -180,26 +200,31 @@ codigosDF$Municipio <- NULL
 IDlist$CodMunicipio <- codigosDF$CodMunicipio
 ```
 
-```{r Ideb}
-# Estatísticas do Ideb 2011
-IdebDF <- as.data.frame(read_csv(
+IDEB 2011 data obtained from http://portal.inep.gov.br/web/portal-ideb/planilhas-para-download
+
+```{r IDEB}
+# Estatistics from IDEB 2011
+IDEBDF <- as.data.frame(read_csv(
     "data/IDEB2011.csv",
     col_names = TRUE, 
     na = c("-"),
     cols_only(
         Codigo = col_integer(),
-        Ideb = col_number()
+        IDEB = col_number()
     )
 ))
-IdebDF <- rename(IdebDF, c('Codigo' = 'CodMunicipio'))
+IDEBDF <- rename(IDEBDF, c('Codigo' = 'CodMunicipio'))
 
 # Average over municipality
-IdebDF <- aggregate(Ideb ~ Codigo,
-                    data = IdebDF, 
+IDEBDF <- aggregate(IDEB ~ CodMunicipio,
+                    data = IDEBDF, 
                     FUN = mean)
 ```
 
-```{r Enem, echo = FALSE}
+ENEM data obtained from 
+http://portal.inep.gov.br/web/guest/microdados
+
+```{r ENEM, echo = FALSE}
 # File layout
 CensoFileLayout <- as.data.frame(matrix(
     data = c(
@@ -297,7 +322,7 @@ CensoFileLayout <- as.data.frame(matrix(
 ), stringsAsFactors = FALSE)
 colnames(CensoFileLayout) <- c('Fieldname', 'ColType')
 
-EnemFileLayout <- as.data.frame(matrix(
+ENEMFileLayout <- as.data.frame(matrix(
     data = c(
         c("CodEntidade", "numeric"),
         c("NomeEntidade", "NULL"),
@@ -328,7 +353,7 @@ EnemFileLayout <- as.data.frame(matrix(
     ncol = 2,
     byrow = TRUE
 ), stringsAsFactors = FALSE)
-colnames(EnemFileLayout) <- c('Fieldname', 'ColType')
+colnames(ENEMFileLayout) <- c('Fieldname', 'ColType')
 
 readDataFile <-
         function(filename,
@@ -382,98 +407,98 @@ CensoData$EtapaEnsino <- NULL
 CensoData <- unique(CensoData)
 CensoData <- CensoData[!duplicated(CensoData$CodEntidade), ]
 
-EnemData <- 
+ENEMData <- 
         readDataFile(
                 filename = "ENEM2015_CHumanas.csv",
                 header = TRUE,
                 sep = ";",
-                FileLayout = EnemFileLayout,
+                FileLayout = ENEMFileLayout,
                 skip = 0,
                 nrows = 16000,
                 comment.char = ""
         )
-EnemData <- rename(EnemData, c("Media" = "CHumanas"))
+ENEMData <- rename(ENEMData, c("Media" = "CHumanas"))
 
-NewEnemData <- 
+NewENEMData <- 
         readDataFile(
                 filename = "ENEM2015_CNatureza.csv",
                 header = TRUE,
                 sep = ";",
-                FileLayout = EnemFileLayout,
+                FileLayout = ENEMFileLayout,
                 skip = 0,
                 nrows = 16000,
                 comment.char = ""
         )
-NewEnemData <- rename(NewEnemData, c('Media' = 'CNatureza'))
-EnemData <- merge(EnemData, NewEnemData[,c('CodEntidade', 'CNatureza')], by = 'CodEntidade')
+NewENEMData <- rename(NewENEMData, c('Media' = 'CNatureza'))
+ENEMData <- merge(ENEMData, NewENEMData[,c('CodEntidade', 'CNatureza')], by = 'CodEntidade')
 
-NewEnemData <- 
+NewENEMData <- 
         readDataFile(
                 filename = "ENEM2015_Linguagens.csv",
                 header = TRUE,
                 sep = ";",
-                FileLayout = EnemFileLayout,
+                FileLayout = ENEMFileLayout,
                 skip = 0,
                 nrows = 16000,
                 comment.char = ""
         )
-NewEnemData <- rename(NewEnemData, c('Media' = 'Linguagens'))
-EnemData <- merge(EnemData, NewEnemData[,c('CodEntidade', 'Linguagens')], by = 'CodEntidade')
+NewENEMData <- rename(NewENEMData, c('Media' = 'Linguagens'))
+ENEMData <- merge(ENEMData, NewENEMData[,c('CodEntidade', 'Linguagens')], by = 'CodEntidade')
 
-NewEnemData <- 
+NewENEMData <- 
         readDataFile(
                 filename = "ENEM2015_Redacao.csv",
                 header = TRUE,
                 sep = ";",
-                FileLayout = EnemFileLayout,
+                FileLayout = ENEMFileLayout,
                 skip = 0,
                 nrows = 16000,
                 comment.char = ""
         )
-NewEnemData <- rename(NewEnemData, c('Media' = 'Redacao'))
-EnemData <- merge(EnemData, NewEnemData[,c('CodEntidade', 'Redacao')], by = 'CodEntidade')
+NewENEMData <- rename(NewENEMData, c('Media' = 'Redacao'))
+ENEMData <- merge(ENEMData, NewENEMData[,c('CodEntidade', 'Redacao')], by = 'CodEntidade')
 
-NewEnemData <- 
+NewENEMData <- 
         readDataFile(
                 filename = "ENEM2015_Matematica.csv",
                 header = TRUE,
                 sep = ";",
-                FileLayout = EnemFileLayout,
+                FileLayout = ENEMFileLayout,
                 skip = 0,
                 nrows = 16000,
                 comment.char = ""
         )
-NewEnemData <- rename(NewEnemData, c('Media' = 'Matematica'))
-EnemData <- merge(EnemData, NewEnemData[,c('CodEntidade', 'Matematica')], by = 'CodEntidade')
+NewENEMData <- rename(NewENEMData, c('Media' = 'Matematica'))
+ENEMData <- merge(ENEMData, NewENEMData[,c('CodEntidade', 'Matematica')], by = 'CodEntidade')
 
-EnemData <- subset(EnemData, SocioEcon != "Sem informação") 
+ENEMData <- subset(ENEMData, SocioEcon != "Sem informa��o") 
 
-EnemDF <- merge(CensoData, EnemData, by = 'CodEntidade', all = FALSE)
+ENEMDF <- merge(CensoData, ENEMData, by = 'CodEntidade', all = FALSE)
 
 # Tansformations
-EnemDF$SocioEcon <-
+ENEMDF$SocioEcon <-
         factor(
-                EnemDF$SocioEcon,
+                ENEMDF$SocioEcon,
                 levels = c(
                         "Muito Baixo",
                         "Baixo",
-                        "Médio Baixo",
-                        "Médio",
-                        "Médio Alto",
+                        "M�dio Baixo",
+                        "M�dio",
+                        "M�dio Alto",
                         "Alto",
                         "Muito alto"
                 ),
                 ordered = TRUE
         )
 
-EnemDF$CHumanas <- EnemDF$CHumanas * EnemDF$NumAlunos
-EnemDF$CNatureza <- EnemDF$CNatureza * EnemDF$NumAlunos
-EnemDF$Linguagens <- EnemDF$Linguagens * EnemDF$NumAlunos
-EnemDF$Redacao <- EnemDF$Redacao * EnemDF$NumAlunos
-EnemDF$Matematica <- EnemDF$Matematica * EnemDF$NumAlunos
-EnemDF$SocioEcon <- as.numeric(EnemDF$SocioEcon) * EnemDF$NumAlunos
+ENEMDF$CHumanas <- ENEMDF$CHumanas * ENEMDF$NumAlunos
+ENEMDF$CNatureza <- ENEMDF$CNatureza * ENEMDF$NumAlunos
+ENEMDF$Linguagens <- ENEMDF$Linguagens * ENEMDF$NumAlunos
+ENEMDF$Redacao <- ENEMDF$Redacao * ENEMDF$NumAlunos
+ENEMDF$Matematica <- ENEMDF$Matematica * ENEMDF$NumAlunos
+ENEMDF$SocioEcon <- as.numeric(ENEMDF$SocioEcon) * ENEMDF$NumAlunos
 
-EnemDF <-
+ENEMDF <-
         aggregate(
                 cbind(
                         NumAlunos,
@@ -484,45 +509,30 @@ EnemDF <-
                         Redacao,
                         Matematica
                 ) ~ CodMunicipio,
-                data = EnemDF,
+                data = ENEMDF,
                 FUN = sum,
                 na.action = na.omit
         )
 
-EnemDF$SocioEcon <- EnemDF$SocioEcon / EnemDF$NumAlunos
-EnemDF$CHumanas <- EnemDF$CHumanas / EnemDF$NumAlunos
-EnemDF$CNatureza <- EnemDF$CNatureza / EnemDF$NumAlunos
-EnemDF$Linguagens <- EnemDF$Linguagens / EnemDF$NumAlunos
-EnemDF$Redacao <- EnemDF$Redacao / EnemDF$NumAlunos
-EnemDF$Matematica <- EnemDF$Matematica / EnemDF$NumAlunos
+ENEMDF$SocioEcon <- ENEMDF$SocioEcon / ENEMDF$NumAlunos
+ENEMDF$CHumanas <- ENEMDF$CHumanas / ENEMDF$NumAlunos
+ENEMDF$CNatureza <- ENEMDF$CNatureza / ENEMDF$NumAlunos
+ENEMDF$Linguagens <- ENEMDF$Linguagens / ENEMDF$NumAlunos
+ENEMDF$Redacao <- ENEMDF$Redacao / ENEMDF$NumAlunos
+ENEMDF$Matematica <- ENEMDF$Matematica / ENEMDF$NumAlunos
 
-EnemDF$NumAlunos <- NULL
+ENEMDF$NumAlunos <- NULL
 
-EnemDF$Enem <- rowMeans(EnemDF[,c('CHumanas', 'CNatureza', 'Linguagens', 'Redacao', 'Matematica')], na.rm = TRUE)
-EnemDF <- subset(EnemDF, select = c('CodMunicipio', 'Enem', 'SocioEcon'))
+ENEMDF$ENEM <- rowMeans(ENEMDF[,c('CHumanas', 'CNatureza', 'Linguagens', 'Redacao', 'Matematica')], na.rm = TRUE)
+ENEMDF <- subset(ENEMDF, select = c('CodMunicipio', 'ENEM', 'SocioEcon'))
 ```
 
 ```{r IBEU, echo = FALSE}
 # Read only relevant variables
 # Ler os data a partir do arquivo .xlsx.
 
-# O indicador de deslocamento casa-trabalho é construído a partir do
-# tempo de deslocamento que as pessoas ocupadas que trabalham fora do
-# domicílio, e retornam diariamente para casa, utilizam no trajeto de
-# ida entre o domicílio de residência e o local de trabalho. É 
-# considerado como tempo de deslocamento adequado quando as pessoas
-# gastam até 1 hora por dia no trajeto casa-trabalho. Assim,
-# utiliza-se proporção de pessoas ocupadas que trabalham fora do
-# domicílio e retornam para casa diariamente que gastam até 1 hora no
-# trajeto casa-trabalho.
-# Obs: Neste trabalho, em vez disso, calculou-se a frequência média em
-# cada uma das categorias 'Até cinco minutos', 'De seis minutos até
-# meia hora', 'Mais de meia hora até uma hora', 'Mais de uma hora até
-# duas horas' e 'Mais de duas horas', calculada a inversa da
-# distribuição acumulada da distribuição normal para cada um desses
-# valores e, finalmente, computado o índice médio pelo produto dos
-# totais de domicílios em cada categoria por esses valores da inversa
-# da normal, dividido pelo total de domicílios em cada município.
+# O indicador de deslocamento casa-trabalho � constru�do a partir do tempo de deslocamento que as pessoas ocupadas que trabalham fora do domic�lio, e retornam diariamente para casa, utilizam no trajeto de ida entre o domic�lio de resid�ncia e o local de trabalho. � considerado como tempo de deslocamento adequado quando as pessoas gastam at� 1 hora por dia no trajeto casa-trabalho. Assim, utiliza-se propor��o de pessoas ocupadas que trabalham fora do domic�lio e retornam para casa diariamente que gastam at� 1 hora no trajeto casa-trabalho.
+
 tempo_deslocDF <- as.data.frame(read_csv(
     "data/01_tempo_deslocamento.csv",
     col_names = TRUE, 
@@ -535,15 +545,25 @@ tempo_deslocDF <- as.data.frame(read_csv(
 tempo_deslocDF <-
         rename(tempo_deslocDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'TDeslocamento'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 tempo_deslocDF$TDeslocamento <-
         IndicStand(tempo_deslocDF$TDeslocamento, negative = FALSE)
 
-# O indicador de arborização no entorno dos domicílios é obtido a
-# partir da proporção de pessoas que moram em domicílios cujo entorno
-# possui arborização.
+# However, for this work, we also calculated an average travel time for each municipality.
+tempo_desloc2DF <- as.data.frame(read_csv(
+    "data/tempo_deslocamento2.csv",
+    col_names = TRUE, 
+    cols_only(
+        Codigo = col_integer(),
+        Indice = col_number()
+    ),
+    locale(encoding = "UTF-8")
+))
+tempo_desloc2DF <-
+        rename(tempo_desloc2DF,
+               c('Codigo' = 'CodMunicipio', 'Indice' = 'TMDeslocamento'))
+
+# The indicator of forestation around households is obtained from the proportion of people living in households whose environment has forestation.
 arborizacaoDF <- as.data.frame(read_csv(
     "data/02_arborizacao.csv",
     col_names = TRUE, 
@@ -555,16 +575,12 @@ arborizacaoDF <- as.data.frame(read_csv(
 ))
 arborizacaoDF <-
         rename(arborizacaoDF,
-               c('Codigo' = 'CodMunicipio', 'Indice' = 'Arborização'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+               c('Codigo' = 'CodMunicipio', 'Indice' = 'Arborizacao'))
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 arborizacaoDF$Arborizacao <-
         IndicStand(arborizacaoDF$Arborizacao, negative = FALSE)
 
-# O indicador de esgoto a céu aberto no entorno dos domicílios é
-# construído a partir da proporção de pessoas que moram em domicílios
-# cujo entorno não possui esgoto a céu aberto.
+# The indicator of open sewage in the surroundings of the houses is constructed from the proportion of people living in households that do not have open sewage in their surroundings.
 esgoto_abertoDF <- as.data.frame(read_csv(
     "data/03_esgoto_ceu_aberto.csv",
     col_names = TRUE, 
@@ -577,15 +593,11 @@ esgoto_abertoDF <- as.data.frame(read_csv(
 esgoto_abertoDF <-
         rename(esgoto_abertoDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'EsgCeuAberto'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 esgoto_abertoDF$EsgCeuAberto <-
         IndicStand(esgoto_abertoDF$EsgCeuAberto, negative = FALSE)
 
-# O indicador de lixo acumulado no entorno dos domicílios é obtido a
-# partir da proporção de pessoas que moram em domicílios cujo entorno
-# não possui lixo acumulado.
+# The indicator of accumulated garbage in the surroundings of the households is obtained from the proportion of people living in households that do not have accumulated garbage in their surroundings.
 lixo_acumDF <- as.data.frame(read_csv(
     "data/04_lixo_acumulado.csv",
     col_names = TRUE, 
@@ -598,14 +610,11 @@ lixo_acumDF <- as.data.frame(read_csv(
 lixo_acumDF <-
         rename(lixo_acumDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'LixoAcumulado'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 lixo_acumDF$LixoAcumulado <-
         IndicStand(lixo_acumDF$LixoAcumulado, negative = FALSE)
 
-# O indicador aglomerado subnormal corresponde à proporção de pessoas
-# da área de ponderação que não moram em aglomerado subnormal.
+# The subnormal clump indicator corresponds to the proportion of people from the weighting area who do not live in subnormal clumps.
 aglom_subnormDF <- as.data.frame(read_csv(
     "data/05_aglomerado_subnormal.csv",
     col_names = TRUE, 
@@ -618,23 +627,11 @@ aglom_subnormDF <- as.data.frame(read_csv(
 aglom_subnormDF <-
         rename(aglom_subnormDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'AglomSubnormal'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 aglom_subnormDF$AglomSubnormal <-
         IndicStand(aglom_subnormDF$AglomSubnormal, negative = FALSE)
 
-# O indicador de densidade domiciliar é construído a partir da razão
-# entre número de pessoas no domicílio e número de dormitório.
-# Considerou-se como densidade domiciliar adequada quando havia até 2
-# pessoas por dormitório. O indicador de densidade domiciliar foi
-# considerado como a proporção de pessoas que estão em domicílios cuja
-# densidade é de até 2 pessoas por dormitório.
-# Obs: Neste trabalho, em vez disso, calculou-se o índice médio de
-# pessoas por dormitório por município, computado pelo produto dos
-# totais de domicílios pelas categorias de pessoas por dormitório,
-# '1', '2', '3', '4', dividido pelo total de domicílios em cada
-# município.
+# The household density indicator is constructed from the ratio between the number of people in the household and the number of dormitories. It was considered adequate household density when there were up to 2 people per dormitory. The household density indicator was considered as the proportion of people who are in households whose density is up to 2 people per dormitory. Obs: In this work, instead, the average number of people per dormitory per municipality, calculated by the product of the totals of households by the categories of people per dormitory, '1', '2', '3', '4 ', divided by the total number of households in each municipality..
 dens_domicilDF <- as.data.frame(read_csv(
     "data/06_densidade_domiciliar.csv",
     col_names = TRUE, 
@@ -647,21 +644,11 @@ dens_domicilDF <- as.data.frame(read_csv(
 dens_domicilDF <-
         rename(dens_domicilDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'DensDomiciliar'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 dens_domicilDF$DensDomiciliar <-
         IndicStand(dens_domicilDF$DensDomiciliar, negative = FALSE)
 
-# No indicador de densidade domiciliar morador/banheiro, considerou-se
-# como adequado o domicílio que possui até 4 pessoas por banheiro. 
-# Assim, o indicador de densidade morador/banheiro corresponde à 
-# proporção de pessoas que estão em domicílio de até 4 pessoas por 
-# banheiro. Obs: Neste trabalho, em vez disso, calculou-se o índice
-# médio de moradores por banheiro por município, computado pelo
-# produto dos totais de domicílios pelas proporções de moradores por
-# banheiro existente no domicílio, dividido pelo total de domicílios
-# em cada município.
+# The household density indicator is constructed from the ratio between the number of people in the household and the number of dormitories. It was considered adequate household density when there were up to 2 people per dormitory. The household density indicator was considered as the proportion of people who are in households whose density is up to 2 people per dormitory. Obs: In this work, instead, the average number of people per dormitory per municipality, calculated by the product of the totals of households by the categories of people per dormitory, '1', '2', '3', '4 ', divided by the total number of households in each municipality.
 dens_mor_banhDF <- as.data.frame(read_csv(
     "data/07_densidade_morador-banheiro.csv",
     col_names = TRUE, 
@@ -674,18 +661,11 @@ dens_mor_banhDF <- as.data.frame(read_csv(
 dens_mor_banhDF <-
         rename(dens_mor_banhDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'DensMoradBanheiro'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 dens_mor_banhDF$DensMoradBanheiro <-
         IndicStand(dens_mor_banhDF$DensMoradBanheiro, negative = FALSE)
 
-# No indicador de material das paredes dos domicílios, considerou-se
-# como adequado o domicílio cujas paredes externas são do tipo de
-# alvenaria com revestimento ou madeira apropriada para construção
-# (aparelhada). Neste caso, o indicador de material das paredes dos
-# domicílios corresponde à proporção de pessoas que estão em
-# domicílios com material das paredes adequado.
+# In the indicator of adequacy of household wall material, it was considered as suitable the domicile whose external walls are of the type of masonry with coating or wood suitable for construction (equipped). In this case, the indicator of dequacy of household wall material corresponds to the proportion of people who are in homes with adequate wall material.
 material_paredesDF <- as.data.frame(read_csv(
     "data/08_material_paredes.csv",
     col_names = TRUE, 
@@ -698,19 +678,11 @@ material_paredesDF <- as.data.frame(read_csv(
 material_paredesDF <-
         rename(material_paredesDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'MaterialParedes'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 material_paredesDF$MaterialParedes <-
         IndicStand(material_paredesDF$MaterialParedes, negative = FALSE)
 
-# No indicador de espécie dos domicílios, considerou-se como adequado
-# os domicílios do tipo casa, casa de vila ou condomínio ou
-# apartamento e inadequados os domicílios do tipo habitação em casa de
-# cômodo, cortiço ou cabeça de porco; tenda ou barraca, dentro de
-# estabelecimento e outros (vagão, trailer, gruta, etc.). Neste caso,
-# o indicador de espécie dos domicílios corresponde à proporção de
-# pessoas que estão em domicílios de espécie adequada.
+# In the indicator of type of households, it was considered as adequate the households of the type house, village house, condominium or apartment and inadequate the dwellings of the type rooming house, slum,  tenement-houses, tent, and others (wagons, trailers, grottos, etc.). In this case, the household species indicator corresponds to the proportion of people who live in households of adequate species.
 especie_domiciliosDF <- as.data.frame(read_csv(
     "data/09_especie_domicilios.csv",
     col_names = TRUE, 
@@ -723,16 +695,11 @@ especie_domiciliosDF <- as.data.frame(read_csv(
 especie_domiciliosDF <-
         rename(especie_domiciliosDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'EspecDomicilio'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 especie_domiciliosDF$EspecDomicilio <-
         IndicStand(especie_domiciliosDF$EspecDomicilio, negative = FALSE)
 
-# O atendimento adequado de água é considerado quando é feito por rede
-# geral de água. O indicador de atendimento de água corresponde à
-# proporção de pessoas que moram em domicílio com atendimento adequado
-# de água.
+# Water service is considered adequate when it is done by general water network. The water supply indicator corresponds to the proportion of people living in homes with adequate water supply.
 atendimento_aguaDF <- as.data.frame(read_csv(
     "data/10_atendimento_agua.csv",
     col_names = TRUE, 
@@ -745,16 +712,11 @@ atendimento_aguaDF <- as.data.frame(read_csv(
 atendimento_aguaDF <-
         rename(atendimento_aguaDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'AtendimentoAgua'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 atendimento_aguaDF$AtendimentoAgua <-
         IndicStand(atendimento_aguaDF$AtendimentoAgua, negative = FALSE)
 
-# O atendimento adequado de esgoto é considerado quando é feito por
-# rede geral de esgoto. O indicador de atendimento de esgoto
-# corresponde à proporção de pessoas que moram em domicílio com
-# atendimento adequado de esgoto.
+# Sewage service is considered adequate when it is done by general sewage network. The indicator of sewage service corresponds to the proportion of people who live in the home with adequate sewage service.
 atendimento_esgotoDF <- as.data.frame(read_csv(
     "data/11_atendimento_esgoto.csv",
     col_names = TRUE, 
@@ -767,17 +729,11 @@ atendimento_esgotoDF <- as.data.frame(read_csv(
 atendimento_esgotoDF <-
         rename(atendimento_esgotoDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'AtendimentoEsgoto'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 atendimento_esgotoDF$AtendimentoEsgoto <-
         IndicStand(atendimento_esgotoDF$AtendimentoEsgoto, negative = FALSE)
 
-# O atendimento adequado de energia é considerado quando há energia
-# elétrica de companhias distribuidoras ou de outras fontes, e sendo
-# de companhia distribuidora quando houver existência de medidor. O
-# indicador de atendimento de energia corresponde à proporção de
-# pessoas que moram em domicílio com atendimento adequado de energia.
+# Energy service is considered adequate when there is electricity from distribution companies or other sources, and being from a distributor company when there is a meter. The indicator of energy attendance corresponds to the proportion of people who live at home with adequate energy attendance.
 atendimento_energiaDF <- as.data.frame(read_csv(
     "data/12_atendimento_energia.csv",
     col_names = TRUE, 
@@ -790,17 +746,11 @@ atendimento_energiaDF <- as.data.frame(read_csv(
 atendimento_energiaDF <-
         rename(atendimento_energiaDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'AtendimentoEnergia'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 atendimento_energiaDF$AtendimentoEnergia <-
         IndicStand(atendimento_energiaDF$AtendimentoEnergia, negative = FALSE)
 
-# A coleta adequada de lixo é considerada quando o lixo é coletado
-# diretamente por serviço de limpeza ou quando colocado em caçamba em
-# serviço de limpeza. O indicador de coleta de lixo corresponde à
-# proporção de pessoas que moram em domicílio com coleta adequada de
-# lixo.
+# Waste collection is considered adequate when waste is collected directly by cleaning service or when placed in a bucket for cleaning service. The indicator of waste collection corresponds to the proportion of people who live in the household with adequate waste collection..
 coleta_lixoDF <- as.data.frame(read_csv(
     "data/13_coleta_lixo.csv",
     col_names = TRUE, 
@@ -813,14 +763,11 @@ coleta_lixoDF <- as.data.frame(read_csv(
 coleta_lixoDF <-
         rename(coleta_lixoDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'ColetaLixo'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 coleta_lixoDF$ColetaLixo <-
         IndicStand(coleta_lixoDF$ColetaLixo, negative = FALSE)
 
-# O indicador de iluminação pública corresponde à proporção de pessoas
-# que moram em domicílios cujo entorno possui iluminação pública. 
+# The public lighting indicator corresponds to the proportion of people living in households whose surroundings have public lighting. 
 iluminacao_publicaDF <- as.data.frame(read_csv(
     "data/14_iluminacao_publica.csv",
     col_names = TRUE, 
@@ -833,15 +780,11 @@ iluminacao_publicaDF <- as.data.frame(read_csv(
 iluminacao_publicaDF <-
         rename(iluminacao_publicaDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'IluminacaoPublica'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 iluminacao_publicaDF$IluminacaoPublica <-
         IndicStand(iluminacao_publicaDF$IluminacaoPublica, negative = FALSE)
 
-# O indicador de pavimentação corresponde à proporção de pessoas que
-# moram em domicílio cujo logradouro possui pavimentação (asfalto,
-# cimento, paralelepípedo etc.).
+# The paving indicator corresponds to the proportion of people living at homes whose street has pavement (asphalt, concrete, stones, etc.).
 pavimentacaoDF <- as.data.frame(read_csv(
     "data/15_pavimentacao.csv",
     col_names = TRUE, 
@@ -854,15 +797,11 @@ pavimentacaoDF <- as.data.frame(read_csv(
 pavimentacaoDF <-
         rename(pavimentacaoDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'Pavimentacao'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 pavimentacaoDF$Pavimentacao <-
         IndicStand(pavimentacaoDF$Pavimentacao, negative = FALSE)
 
-# O indicador de calçada corresponde à proporção de pessoas que moram
-# em domicílio cuja face do logradouro onde se localiza o domicílio
-# possui calçada.
+# The sidewalk indicator corresponds to the proportion of people living at homes whose face to the street is located has a sidewalk.
 calcadaDF <- as.data.frame(read_csv(
     "data/16_calcada.csv",
     col_names = TRUE, 
@@ -875,14 +814,10 @@ calcadaDF <- as.data.frame(read_csv(
 calcadaDF <-
         rename(calcadaDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'Calcada'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 calcadaDF$Calcada <- IndicStand(calcadaDF$Calcada, negative = FALSE)
 
-# O indicador de meio-fio/guia corresponde à proporção de pessoas que
-# moram em domicílio cuja face do logradouro onde se localiza o
-# domicílio possui meio-fio/guia.
+# The curb/guide indicator corresponds to the proportion of people living at homes whose face to the street is located has a curb/guide.
 meiofio_guiaDF <- as.data.frame(read_csv(
     "data/17_meio-fio_guia.csv",
     col_names = TRUE, 
@@ -895,17 +830,11 @@ meiofio_guiaDF <- as.data.frame(read_csv(
 meiofio_guiaDF <-
         rename(meiofio_guiaDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'MeiofioGuia'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 meiofio_guiaDF$MeiofioGuia <-
         IndicStand(meiofio_guiaDF$MeiofioGuia, negative = FALSE)
 
-# O indicador de bueiro ou boca de lobo corresponde à proporção de
-# pessoas que moram em domicílios cujo entorno possui bueiro ou boca
-# de lobo. A identificação de bueiro ou boca de lobo no entorno dos
-# domicílios corresponde à face ou a face confrontante de onde se
-# localizam os domicílios.
+# The indicator of road gully corresponds to the proportion of people living in households whose environment has road gullies. The identification of road gullies in the surroundings of the domiciles corresponds to the confronting face face to the street where the domicile is located.
 bueiro_boca_de_loboDF <- as.data.frame(read_csv(
     "data/18_bueiro_boca_de_lobo.csv",
     col_names = TRUE, 
@@ -918,16 +847,11 @@ bueiro_boca_de_loboDF <- as.data.frame(read_csv(
 bueiro_boca_de_loboDF <-
         rename(bueiro_boca_de_loboDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'BueiroBocadelobo'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 bueiro_boca_de_loboDF$BueiroBocadelobo <-
         IndicStand(bueiro_boca_de_loboDF$BueiroBocadelobo, negative = FALSE)
 
-# O indicador de rampa para cadeirantes corresponde à proporção de
-# pessoas que moram em domicílio cuja face do logradouro onde se
-# localiza o domicílio possui rampa para dar acesso às pessoas que
-# utilizam cadeiras de rodas.
+# The wheelchair ramp indicator corresponds to the proportion of people living at homes whose face of the street where the home is located has a ramp to give access to people who use wheelchairs.
 rampa_cadeirantesDF <- as.data.frame(read_csv(
     "data/19_rampa_cadeirantes.csv",
     col_names = TRUE, 
@@ -940,14 +864,11 @@ rampa_cadeirantesDF <- as.data.frame(read_csv(
 rampa_cadeirantesDF <-
         rename(rampa_cadeirantesDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'RampaCadeirantes'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 rampa_cadeirantesDF$RampaCadeirantes <-
         IndicStand(rampa_cadeirantesDF$RampaCadeirantes, negative = FALSE)
 
-# O indicador de logradouros corresponde à proporção de pessoas que
-# moram em domicílio onde o logradouro possui identificação.
+# The address identification indicator corresponds to the proportion of people living at home where the street has identification.
 ident_logradouroDF <- as.data.frame(read_csv(
     "data/20_identificacao_logradouro.csv",
     col_names = TRUE, 
@@ -960,19 +881,25 @@ ident_logradouroDF <- as.data.frame(read_csv(
 ident_logradouroDF <-
         rename(ident_logradouroDF,
                c('Codigo' = 'CodMunicipio', 'Indice' = 'IdentLogradouro'))
-# Para a padronização do índice, foi considerado que este é um índice
-# positivo, pois maior bem-estar corresponde a maiores valores do
-# índice
+# For the standardization of the index, it was considered that this is a positive index, since higher welfare corresponds to higher index values
 ident_logradouroDF$IdentLogradouro <-
         IndicStand(ident_logradouroDF$IdentLogradouro, negative = FALSE)
 ```
 
 ```{r IndicatorsData, echo = FALSE}
+# All the indices are merged into one single database
 IndicatorsData <- merge(
-        IdebDF,
-        EnemDF,
+        IDEBDF,
+        ENEMDF,
         by = 'CodMunicipio',
         all = TRUE,
+        incomparables = NA
+)
+IndicatorsData <- merge(
+        IndicatorsData,
+        tempo_desloc2DF,
+        by = 'CodMunicipio',
+        all = FALSE,
         incomparables = NA
 )
 IndicatorsData <- merge(
@@ -1003,7 +930,7 @@ IndicatorsData <- merge(
         all = FALSE,
         incomparables = NA
 )
-# As the 'Aglomerado subnormal' indicator was evaluated on the metropolis only, it has entries 322 only and 
+# As the 'Aglomerado subnormal' indicator was evaluated on the metropolis only, it has entries 322 only and missing values are missing entries are filled with the median of the set of values
 IndicatorsData <- merge(
         IndicatorsData,
         aglom_subnormDF,
@@ -1121,6 +1048,7 @@ IndicatorsData <- merge(
         all = FALSE,
         incomparables = NA
 )
+# Duplicate entries are eliminated
 IndicatorsData <-
         subset(IndicatorsData, !duplicated(IndicatorsData$CodMunicipio))
 ```
@@ -1130,7 +1058,7 @@ IndicsComparData <- subset(IndicatorsData, select = -CodMunicipio)
 psych::describe(IndicsComparData)
 
 IndicsCorrMtx <- rcorr(as.matrix(IndicsComparData))
-IndicsComparData <- IndicsComparData[, c(names(IndicsComparData[1]),
+IndicsComparData <- IndicsComparData[, c(names(IndicsComparData['IDEB']),
                          names(sort(abs(IndicsCorrMtx$r[1, -1]),
                                     decreasing = TRUE)))]
 IndicsCorrMtx <- rcorr(as.matrix(IndicsComparData))
@@ -1164,7 +1092,18 @@ kable(
     digits = 2,
     row.names = FALSE,
     align = c("l", "r", "r"),
-    caption = "Significância das variáveis"
+    caption = "Signific�ncia das vari�veis"
+)
+
+write.xlsx(
+    data.frame(
+        var = names(IndicsCorrMtx$r[1, -1]),
+        r = formatC(IndicsCorrMtx$r[1, -1], format = "f", 2),
+        p = formatC(IndicsCorrMtx$P[1, -1], format = "E", 2)
+    ),
+    file = "data/IndicsCorrMtx.xls",
+    row.names = FALSE,
+    col.names = TRUE
 )
 ```
 
@@ -1176,12 +1115,35 @@ psych::alpha(
 )
 ```
 
+
+```{r SocEconComparData, echo = FALSE}
+SocEconComparData <-
+  IndicsComparData[, c(names(IndicsComparData['SocioEcon']),
+                       names(sort(abs(IndicsCorrMtx$r[3,-3]),
+                                  decreasing = TRUE)))]
+SocEconCorrMtx <- rcorr(as.matrix(SocEconComparData))
+
+kable(
+    data.frame(
+        var = names(SocEconCorrMtx$r[1, -1]),
+        r = formatC(SocEconCorrMtx$r[1, -1], format = "f", 2),
+        p = formatC(SocEconCorrMtx$P[1, -1], format = "E", 2)
+    ),
+    digits = 2,
+    row.names = FALSE,
+    align = c("l", "r", "r"),
+    caption = "Signific�ncia das vari�veis"
+)
+```
+
+
 ```{r DimensionsData, echo = FALSE}
 DimensionsData <-
     data.frame(CodMunicipio = IndicatorsData$CodMunicipio, 
-               Ideb = IndicatorsData$Ideb,
-               Enem = IndicatorsData$Enem,
-               SocioEcon = IndicatorsData$SocioEcon)
+               IDEB = IndicatorsData$IDEB,
+               ENEM = IndicatorsData$ENEM,
+               SocioEcon = IndicatorsData$SocioEcon,
+               TMDeslocamento = IndicatorsData$TMDeslocamento)
 DimensionsData$D1 <- IndicatorsData$TDeslocamento
 DimensionsData$D2 <-
     (IndicatorsData$Arborizacao +
@@ -1245,7 +1207,7 @@ kable(
     digits = 2,
     row.names = FALSE,
     align = c("l", "r", "r"),
-    caption = "Significância das variáveis"
+    caption = "Signific�ncia das vari�veis"
 )
 
 DimsCorrelation <- corr.test(DimsComparData, method = "spearman")
@@ -1254,13 +1216,14 @@ kable(DimsCorrelation$r, digits = 2)
 kable(formatC(DimsCorrelation$p, format = "E", 2))
 ```
 
-```{r IbeuData, echo = FALSE}
-IbeuData <-
+```{r IBEUData, echo = FALSE}
+IBEUData <-
     data.frame(CodMunicipio = IndicatorsData$CodMunicipio, 
-               Ideb = IndicatorsData$Ideb,
-               Enem = IndicatorsData$Enem,
-               SocioEcon = IndicatorsData$SocioEcon)
-IbeuData$Ibeu <-
+               IDEB = IndicatorsData$IDEB,
+               ENEM = IndicatorsData$ENEM,
+               SocioEcon = IndicatorsData$SocioEcon,
+               TMDeslocamento = IndicatorsData$TMDeslocamento)
+IBEUData$IBEU <-
     (DimensionsData$D1 + 
      DimensionsData$D2 + 
      DimensionsData$D3 + 
@@ -1268,16 +1231,16 @@ IbeuData$Ibeu <-
      DimensionsData$D5) / 5
 ```
 
-```{r IbeuComparData, echo = FALSE}
+```{r IBEUComparData, echo = FALSE}
 
-IbeuComparData <- subset(IbeuData, select = -CodMunicipio)
+IBEUComparData <- subset(IBEUData, select = -CodMunicipio)
 
-IbeuCorrMtx <- rcorr(as.matrix(IbeuComparData))
+IBEUCorrMtx <- rcorr(as.matrix(IBEUComparData))
 
-IbeuComparData <- IbeuComparData[, c(names(IbeuComparData[1]),
-                         names(sort(abs(IbeuCorrMtx$r[1, -1]),
+IBEUComparData <- IBEUComparData[, c(names(IBEUComparData[1]),
+                         names(sort(abs(IBEUCorrMtx$r[1, -1]),
                                     decreasing = TRUE)))]
-IbeuCorrMtx <- rcorr(as.matrix(IbeuComparData))
+IBEUCorrMtx <- rcorr(as.matrix(IBEUComparData))
 
 CairoPNG(
         filename = paste0("images/", "IBEUCorr.png"),
@@ -1287,7 +1250,7 @@ CairoPNG(
         bg = "white"
 )
 corrplot(
-        as.matrix(IbeuCorrMtx$r),
+        as.matrix(IBEUCorrMtx$r),
         addCoef.col = "black", # Add coefficient of correlation,
         method = "color",
         type = "upper",
@@ -1300,20 +1263,20 @@ dev.off()
 
 kable(
     data.frame(
-        var = names(IbeuCorrMtx$r[1, -1]),
-        r = formatC(IbeuCorrMtx$r[1, -1], format = "f", 2),
-        p = formatC(IbeuCorrMtx$P[1, -1], format = "E", 2)
+        var = names(IBEUCorrMtx$r[1, -1]),
+        r = formatC(IBEUCorrMtx$r[1, -1], format = "f", 2),
+        p = formatC(IBEUCorrMtx$P[1, -1], format = "E", 2)
     ),
     digits = 2,
     row.names = FALSE,
     align = c("l", "r", "r"),
-    caption = "Significância das variáveis"
+    caption = "Signific�ncia das vari�veis"
 )
 
-IbeuCorrelation <- corr.test(IbeuComparData, method = "spearman")
+IBEUCorrelation <- corr.test(IBEUComparData, method = "spearman")
 
-kable(IbeuCorrelation$r, digits = 2)
-kable(formatC(IbeuCorrelation$p, format = "E", 2))
+kable(IBEUCorrelation$r, digits = 2)
+kable(formatC(IBEUCorrelation$p, format = "E", 2))
 ```
 
 ```{r merging, echo = FALSE}
@@ -1323,12 +1286,12 @@ DimensionsDF <- merge(DimensionsData,
                       all.y = FALSE)
 DimensionsDF <- DimensionsDF[!duplicated(DimensionsDF$CodMunicipio), ]
 
-IbeuDF <- merge(IbeuData,
+IBEUDF <- merge(IBEUData,
                 subset(IDlist, select = -nome),
                 by = 'CodMunicipio',
                 all.y = FALSE)
-IbeuDF <- IbeuDF[!duplicated(IbeuDF$CodMunicipio),]
-IbeuDF <- subset(IbeuDF, select = c('id', 'Ideb', 'Ibeu'))
+IBEUDF <- IBEUDF[!duplicated(IBEUDF$CodMunicipio),]
+IBEUDF <- subset(IBEUDF, select = c('id', 'IDEB', 'IBEU'))
 ```
 
 ```{r Maps}
@@ -1379,7 +1342,7 @@ scale_y_latitude <- function(ymin = -90,
     ))
 }
 
-choroplMap <- function(datafile, var1name, var2name, picfilename) {
+choroplMap <- function(datafile, xvarname, yvarname, picfilename, percflag = TRUE) {
         CairoPNG(
                 filename = paste0("images/", picfilename),
                 width = 3600,
@@ -1392,16 +1355,30 @@ choroplMap <- function(datafile, var1name, var2name, picfilename) {
         choroMap <- choroMap + geom_map(
                 data = datafile,
                 aes(map_id = id,
-                    fill = datafile[, var1name],
-                    fill2 = datafile[, var2name]
+                    fill = datafile[, xvarname],
+                    fill2 = datafile[, yvarname]
                     ),
                 map = municipiosDF,
                 color = 'NA'
         )
-        choroMap <-
-                choroMap + scale_fill_colorplane(labels_y = scales::percent,
-                                                 axis_title = var1name,
-                                                 axis_title_y = var2name)
+        if (percflag)
+                choroMap <-
+                choroMap + scale_fill_colorplane(
+                        limits_y = c(0, 1),
+                        labels_y = percent,
+                        axis_title = xvarname,
+                        axis_title_y = yvarname,
+                        color_projection = "YUV",
+                        Y = 0.4
+                )
+        else
+                choroMap <-
+                choroMap + scale_fill_colorplane(
+                        axis_title = xvarname,
+                        axis_title_y = yvarname,
+                        color_projection = "YUV",
+                        Y = 0.4
+                )
         choroMap <- choroMap + expand_limits(x = municipiosDF$long,
                                              y = municipiosDF$lat)
         choroMap <- choroMap + coord_map()
@@ -1433,34 +1410,32 @@ choroplMap <- function(datafile, var1name, var2name, picfilename) {
 
 }
 
-choroplMap(DimensionsDF, 'Ideb', 'D1', "D1Map.png") 
+choroplMap(DimensionsDF, 'IDEB', 'D1', "D1Map.png") 
 
-choroplMap(DimensionsDF, 'Ideb', 'D2', "D2Map.png")
+choroplMap(DimensionsDF, 'IDEB', 'D2', "D2Map.png")
 
-choroplMap(DimensionsDF, 'Ideb', 'D3', "D3Map.png")
+choroplMap(DimensionsDF, 'IDEB', 'D3', "D3Map.png")
 
-choroplMap(DimensionsDF, 'Ideb', 'D4', "D4Map.png")
+choroplMap(DimensionsDF, 'IDEB', 'D4', "D4Map.png")
 
-choroplMap(DimensionsDF, 'Ideb', 'D5', "D5Map.png")
+choroplMap(DimensionsDF, 'IDEB', 'D5', "D5Map.png")
 
-choroplMap(IbeuDF, 'Ideb', 'Ibeu', "IbeuMap.png")
+choroplMap(DimensionsDF, 'IDEB', 'TMDeslocamento', "TMDeslocMap.png", percflag = FALSE)
+
+choroplMap(DimensionsDF, 'ENEM', 'SocioEcon', "SocEconMap.png", percflag = FALSE)
+
+choroplMap(IBEUDF, 'IDEB', 'IBEU', "IBEUMap.png")
 ```
+
+
 
 
 ## References
 ```{r}
 citations()
 ```
-
-- Percentual de domic?lios particulares permanentes com lixo coletado por servi?o de limpeza. IBGE. Dispon?vel em: <http://dados.gov.br/dataset/cgeo_vw_per_lixocoletadodireto>
-- Percentual de domic?lios particulares permanentes com energia el?trica de companhia distribuidora e com medidor de uso exclusivo. IBGE. Dispon?vel em: <http://dados.gov.br/dataset/cgeo_vw_per_domenergiadistrimedidor_exclusivo>
-- Percentual de domic?lios particulares permanentes com banheiro de uso exclusivo dos moradores ou sanit?rio e esgotamento sanit?rio via rede geral de esgoto ou pluvial ou fossa s?ptica. IBGE. Dispon?vel em: <http://dados.gov.br/dataset/cgeo_vw_per_redegeralefossa>
-- Percentual de domic?lios particulares permanentes com abastecimento de ?gua da rede geral. IBGE. Dispon?vel em: <http://dados.gov.br/dataset/cgeo_vw_per_domredegeralagua>
-- Estat?sticas do Ideb 2013. Ensino Fundamental Regular - Anos Finais. IDEB. Dispon?vel em: <http://portal.inep.gov.br/web/portal-ideb/planilhas-para-download>
-
-- dos Santos, R. P. (2017). Impacto do ensino de Filosofia e Sociologia no desempenho escolar: uma análise a partir dos microdados do censo escolar do Inep. Submetido a *Pedagogia Em Foco*, v. 12.
 - Harvey, D. (1971). *Social Justice and the City*. London: Edward Arnold. 
-- Ribeiro, L. C. de Q., Koslinski, M. C., Zuccarelli, C., & Christovão, A. C. (2016). Desafios Urbanos à Democratização do Acesso às Oportunidades Educacionais nas Metrópoles Brasileiras. *Educação & Sociedade*, 37(134), 171–193. https://doi.org/10.1590/ES0101-73302016157093
+- Ribeiro, L. C. de Q., Koslinski, M. C., Zuccarelli, C., & Christov�o, A. C. (2016). Desafios Urbanos � Democratiza��o do Acesso �s Oportunidades Educacionais nas Metr�poles Brasileiras. *Educa��o & Sociedade*, *37*(134), 171-193. https://doi.org/10.1590/ES0101-73302016157093
 - Ribeiro, L. C. de Q., & Ribeiro, M. G. (2013). *IBEU - Indice de Bem-Estar Urbano*. Rio de Janeiro: Letra Capital. Retrieved from http://www.observatoriodasmetropoles.net/images/abook_file/ibeu_livro.pdf
 
 
